@@ -1,0 +1,9 @@
+&ACCESS RVP
+&REL 1
+&COMMENT Safety Zone Position Data
+DEFDAT SAFE_ZONE
+  ; Declarations for Cartesian safe points
+  DECL POS P_SAFE_WORK_1 = {X 400.0, Y -100.0, Z 350.0, A 0.0, B 90.0, C 0.0}
+  DECL POS P_SAFE_WORK_2 = {X 450.0, Y 150.0, Z 350.0, A 0.0, B 90.0, C 0.0}
+  DECL POS P_SAFE_STANDBY = {X 300.0, Y 0.0, Z 400.0, A 0.0, B 90.0, C 0.0}
+ENDDAT

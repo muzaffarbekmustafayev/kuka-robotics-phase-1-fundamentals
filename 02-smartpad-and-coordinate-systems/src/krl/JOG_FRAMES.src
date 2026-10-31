@@ -1,0 +1,34 @@
+&ACCESS RVP
+&REL 1
+&PARAM EDITMASK = *
+&PARAM TEMPLATE = C:\KRC\Roboter\Template\vorgabe
+&PARAM DISKPATH = KRC:\R1\Program
+DEF JOG_FRAMES()
+  ; ===========================================================================
+  ; Program: JOG_FRAMES.src
+  ; Purpose: Dynamic BASE and TOOL Coordinate Transformation Demonstration
+  ; Manipulator: KUKA KR 6 R900-2 | Controller: KSS 8.3 / 8.6
+  ; ===========================================================================
+
+  ; FOLD INI;%{PE}
+    GLOBAL INTERRUPT DECL 3 WHEN $STOPMESS==TRUE DO IR_STOPM()
+    INTERRUPT ON 3
+    BAS (#INITMOV,0)
+  ; ENDFOLD (INI)
+
+  ; 1. Define Tool 1 (Pointer tool: 150mm offset along Z)
+  $TOOL = TOOL_DATA[1]
+  $BASE = BASE_DATA[1]
+  $VEL.CP = 0.250 ; T1 max safe velocity (250 mm/s)
+
+  PTP XHOME Vel=20 % DEFAULT
+
+  ; 2. Linear motion relative to active Base frame
+  LIN XP_APPROACH Vel=0.25 m/s CPDAT1 Tool[1]:Pointer Base[1]:WorkcellBase
+
+  ; 3. Offset motion along local Tool Z axis using Geometric Operator (:)
+  ; Shift TCP +50mm along tool axis
+  LIN $POS_ACT : {X 0.0, Y 0.0, Z 50.0, A 0.0, B 0.0, C 0.0}
+
+  PTP XHOME Vel=20 % DEFAULT
+END

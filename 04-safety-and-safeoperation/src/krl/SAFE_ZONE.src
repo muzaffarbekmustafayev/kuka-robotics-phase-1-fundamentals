@@ -1,0 +1,44 @@
+&ACCESS RVP
+&REL 1
+&COMMENT Safety Zone & Reduced Speed Check
+DEF SAFE_ZONE( )
+  ; =========================================================
+  ; Lesson 04: KUKA SafeOperation & Workspace Supervision
+  ; Robot: KUKA KR 6 R900-2 (KR AGILUS-2)
+  ; Description: Monitors cell safety boundaries and reduced speed
+  ; =========================================================
+  
+  ; INI
+  BAS (#INITMOV, 0)
+  
+  ; Set Reduced Speed for Safe Operation (T1 / Monitored mode)
+  $VEL.CP = 0.25   ; Max 0.25 m/s (250 mm/s) per ISO 10218-1
+  $ACC.CP = 1.0    ; Moderate deceleration for safety
+  
+  ; Move to Home position safely
+  PTP XHOME
+  
+  ; Continuous safety monitoring loop
+  LOOP
+    ; Check if external safety gate / light curtain is interrupted
+    IF $IN[10] == FALSE THEN
+      ; Safety gate opened: Trigger Safe Stop 1 (SS1)
+      BRAKE
+      $OUT[15] = TRUE ; Turn on Warning Beacon
+      WAIT SEC 0.5
+    ELSE
+      $OUT[15] = FALSE
+    ENDIF
+    
+    ; Execute safe production linear path
+    LIN P_SAFE_WORK_1
+    WAIT SEC 0.2
+    
+    LIN P_SAFE_WORK_2
+    WAIT SEC 0.2
+    
+    ; Return to safe standby
+    PTP P_SAFE_STANDBY
+  ENDLOOP
+
+END
