@@ -1,0 +1,27 @@
+&ACCESS RVP
+&REL 1
+&PARAM EDITMASK = *
+&PARAM TEMPLATE = C:\KRC\Roboter\Template\vorgabe
+&PARAM DISKPATH = KRC:\R1\Program
+DEFDAT WORKSPACE_CHECK
+  ; ===========================================================================
+  ; Data Module: WORKSPACE_CHECK.dat
+  ; Coordinates and dynamic parameters for KR 6 R900-2 cell boundary checks.
+  ; ===========================================================================
+
+  ; Standard Home Position for KR 6 R900-2
+  DECL E6AXIS XHOME = {A1 0.0, A2 -90.0, A3 90.0, A4 0.0, A5 0.0, A6 0.0, E1 0.0, E2 0.0, E3 0.0, E4 0.0, E5 0.0, E6 0.0}
+
+  ; Safe boundary inspection point 1 (Front reach inspection)
+  DECL E6POS XP_CHECK1 = {X 500.0, Y 0.0, Z 550.0, A 0.0, B 90.0, C 0.0, S 'B010', T 'B010011', E1 0.0, E2 0.0, E3 0.0, E4 0.0, E5 0.0, E6 0.0}
+
+  ; Safe boundary inspection point 2 (Lateral sweep inspection)
+  DECL E6POS XP_CHECK2 = {X 500.0, Y 250.0, Z 550.0, A 0.0, B 90.0, C 0.0, S 'B010', T 'B010011', E1 0.0, E2 0.0, E3 0.0, E4 0.0, E5 0.0, E6 0.0}
+
+  ; Motion velocity and acceleration parameter structs
+  DECL PDAT PDEFAULT = {VEL 100.0, ACC 100.0, APO_DIST 100.0}
+  DECL PDAT PDAT1 = {VEL 30.0, ACC 50.0, APO_DIST 50.0}
+  DECL CPDAT CPDAT1 = {VEL 0.25, ACC 5.0, APO_DIST 20.0, APO_FAC 50.0, ORI_TYP #VAR}
+  DECL FDAT FHOME = {TOOL_NO 0, BASE_NO 0, IPO_FRAME #BASE}
+
+ENDDAT

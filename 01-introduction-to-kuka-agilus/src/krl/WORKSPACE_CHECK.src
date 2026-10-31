@@ -1,0 +1,84 @@
+&ACCESS RVP
+&REL 1
+&PARAM EDITMASK = *
+&PARAM TEMPLATE = C:\KRC\Roboter\Template\vorgabe
+&PARAM DISKPATH = KRC:\R1\Program
+DEF WORKSPACE_CHECK()
+  ; ===========================================================================
+  ; Program: WORKSPACE_CHECK.src
+  ; Description: Initial startup inspection, software limit checks, and safe
+  ;              home trajectory verification for KUKA KR 6 R900-2 (KR AGILUS-2).
+  ; Controller: KUKA KRC4 / KRC5 (KSS 8.3 / 8.6 / 8.7)
+  ; Standards: ISO 10218-1, ISO 13849-1 (SafeOperation envelope verification)
+  ; Author: Muzaffarbek Mustafayev (SamDU & TSU)
+  ; ===========================================================================
+
+  ; FOLD INI;%{PE}
+    ; FOLD BASISTECH INI
+      GLOBAL INTERRUPT DECL 3 WHEN $STOPMESS==TRUE DO IR_STOPM()
+      INTERRUPT ON 3
+      BAS (#INITMOV,0)
+    ; ENDFOLD (BASISTECH INI)
+  ; ENDFOLD (INI)
+
+  ; ---------------------------------------------------------------------------
+  ; 1. Verification of Safe Operating Mode (T1 Reduced Speed Mode: <= 250 mm/s)
+  ; ---------------------------------------------------------------------------
+  IF ($MODE_OP == #T1) THEN
+    $VEL.CP = 0.250 ; Set max Cartesian velocity to 250 mm/s (ISO 10218-1 limit)
+  ELSE
+    $VEL.CP = 1.000 ; Set default nominal path velocity (1.0 m/s)
+  ENDIF
+
+  ; Set acceleration limits (percentage of max motor dynamic capability)
+  $ACC.CP = 5.0 ; 5.0 m/s^2 linear acceleration
+
+  ; ---------------------------------------------------------------------------
+  ; 2. Move to Machine Home Position using Joint-Interpolated PTP
+  ; ---------------------------------------------------------------------------
+  $BWDSTART = FALSE
+  PDAT_ACT = PDEFAULT
+  FDAT_ACT = FHOME
+  BAS(#PTP_PARAMS, 20) ; Set PTP velocity to 20% for initial cell sweep
+
+  PTP XHOME ; Move to mechanical reference home position
+
+  ; ---------------------------------------------------------------------------
+  ; 3. Axis Limit Verification & Software Cam Monitoring
+  ; ---------------------------------------------------------------------------
+  ; Verify Axis 1 (A1: +/-170 deg)
+  IF ($AXIS_ACT.A1 < -170.0) OR ($AXIS_ACT.A1 > 170.0) THEN
+    HALT ; Axis 1 out of software stroke limits
+  ENDIF
+
+  ; Verify Axis 2 (A2: -190 to +45 deg)
+  IF ($AXIS_ACT.A2 < -190.0) OR ($AXIS_ACT.A2 > 45.0) THEN
+    HALT ; Axis 2 out of software stroke limits
+  ENDIF
+
+  ; Verify Axis 3 (A3: -120 to +156 deg)
+  IF ($AXIS_ACT.A3 < -120.0) OR ($AXIS_ACT.A3 > 156.0) THEN
+    HALT ; Axis 3 out of software stroke limits
+  ENDIF
+
+  ; Verify Axis 5 Wrist Singularity Clearance (|A5| < 2.0 deg indicates danger)
+  IF (ABS($AXIS_ACT.A5) < 2.0) THEN
+    ; Warning: Approaching spherical wrist singularity (Axis 4 and Axis 6 collinear)
+    $OUT[1] = TRUE ; Signal safety warning bit on fieldbus
+  ELSE
+    $OUT[1] = FALSE
+  ENDIF
+
+  ; ---------------------------------------------------------------------------
+  ; 4. Controlled Test Motion within Certified Safe Workspace Box
+  ; ---------------------------------------------------------------------------
+  $TOOL = TOOL_DATA[1]
+  $BASE = BASE_DATA[1]
+
+  PTP XP_CHECK1 Vel=30 % PDAT1
+  LIN XP_CHECK2 Vel=0.25 m/s CPDAT1
+
+  ; Return to Safe Standby Position
+  PTP XHOME Vel=20 % PDEFAULT
+
+END
